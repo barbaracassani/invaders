@@ -18,6 +18,9 @@ var SpaceInvaders = SpaceInvaders || {};
     var Alien = function(config) {
         this.el = '<div class="alien ' + config.class + '"></div>';
         this.inDom = false;
+        this.timeout = window.setTimeout(function() {
+
+        }, 10000);
     };
 
     var Cannon = function() {
@@ -31,13 +34,23 @@ var SpaceInvaders = SpaceInvaders || {};
         this.currentClass = 'h1';
     };
 
+    var EnemyBullet = function() {
+        this.el = '<div class="bullet enemy"></div>';
+        SP.makeObservable(this);
+        this.inDom = false;
+        this.checkImpact = function() {
+
+        }
+    };
+
+
     var Bullet = function() {
         this.el = '<div class="bullet"></div>';
         SP.makeObservable(this);
         this.inDom = false;
         this.checkImpact = function() {
             var al = SP.game.aliens,
-                a = al.length - 1, i, alPos, bulPos, alW, bulW, noH, step, dist;
+                a = al.length - 1, i, alPos, bulPos, alW, bulW, noH, step, dist, onHouse;
             step = SP.game.$container.width() / SP.game.housesNo;
             while(a >= 0) {
                 i = al[a].length - 1;
@@ -46,23 +59,10 @@ var SpaceInvaders = SpaceInvaders || {};
                     bulPos = this.el.position();
                     bulW = this.el.width();
 
-                    if (bulPos.top <= SP.game.housesYPos + SP.game.housesH &&
-                        bulPos.top >= SP.game.housesYPos) {
-                        // the bullet is in the houses row
-                        // we know from the start where the houses are
-                        noH = SP.game.housesNo - 1;
-
-                        while (noH >= 0) {
-                            dist = step / 2 + step * noH;
-                            if (bulPos.left >= dist && bulPos.left <= dist + SP.game.housesW) {
-                                return {
-                                    type : 'house',
-                                    num : noH
-                                }
-                            };
-                            noH--;
-                        }
-                    }
+                    onHouse = SP.game.checkImpactOnHouses(this);
+                    if (onHouse) {
+                        return onHouse;
+                    };
 
                     alPos = al[a][i].el.position();
                     alW = al[a][i].el.width();
@@ -127,16 +127,55 @@ var SpaceInvaders = SpaceInvaders || {};
         };
     };
 
+    Game.prototype.checkImpactOnCannon = function(bullet) {
+        var bulPos = bullet.el.position();
+        var bulW = bullet.el.width();
+        var cannon = this.cannon.el;
+        var pos = cannon.position();
+        if (bulPos.top <= pos.top + cannon.height() &&
+            bulPos.top >= pos.top &&
+            bulPos.left >= pos.left &&
+            bulPos.left <= pos.left + cannon.width()) {
+            return true;
+        }
+        return false;
+    };
+
+    Game.prototype.checkImpactOnHouses = function(bullet) {
+        var bulPos = bullet.el.position();
+        var bulW = bullet.el.width();
+        var noH, dist, step;
+        step = this.$container.width() / this.housesNo;
+        if (bulPos.top <= this.housesYPos + this.housesH &&
+            bulPos.top >= this.housesYPos) {
+            // the bullet is in the houses row
+            // we know from the start where the houses are
+            noH = this.housesNo - 1;
+
+            while (noH >= 0) {
+                dist = step / 2 + step * noH;
+                if (bulPos.left >= dist && bulPos.left <= dist + SP.game.housesW) {
+                    return {
+                        type : 'house',
+                        num : noH
+                    }
+                };
+                noH--;
+            }
+        }
+        return false;
+    };
+
     Game.prototype.layField = function() {
         var rowSize = 10,
             offset = 100,
             alienTypes = [
                 {
-                    class : 'bug',
+                    class : 'minions',
                     exploding : null
                 },
                 {
-                    class : 'nasty',
+                    class : 'bug',
                     exploding : null
                 },
                 {
@@ -144,7 +183,7 @@ var SpaceInvaders = SpaceInvaders || {};
                     exploding : null
                 },
                 {
-                    class : 'minions',
+                    class : 'nasty',
                     exploding : null
                 }
             ],
@@ -241,6 +280,7 @@ var SpaceInvaders = SpaceInvaders || {};
     Game.prototype.blastAlien = function(alObj) {
         var alien = this.aliens[alObj.type][alObj.num];
         alien.el.detach();
+        window.clearTimeout(alien.timeout);
         this.aliens[alObj.type].splice(alObj.num, 1);
         alien = null;
     };

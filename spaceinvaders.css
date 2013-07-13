@@ -22,7 +22,9 @@
     background-color: #2f4f4f;
     position: absolute;
 }
-
+.bullet.enemy {
+    background-color: red;
+}
 .house {
     width:20px;
     height:20px;
