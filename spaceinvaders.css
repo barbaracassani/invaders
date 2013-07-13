@@ -23,6 +23,31 @@
     position: absolute;
 }
 
+.house {
+    width:20px;
+    height:20px;
+    position: absolute;
+}
+.h1 {
+    background-color: black;
+}
+.h2 {
+    background-color: #444;
+}
+.h3 {
+    background-color: #888;
+}
+.h4 {
+    background-color: #aaa;
+}
+.h5 {
+    background-color: #ddd;
+}
+.h6 {
+    background-color: #fff;
+    border: 1px dotted grey;
+}
+
 .alien {
     width:20px;
     height:20px;

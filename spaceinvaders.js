@@ -2,10 +2,15 @@ var SpaceInvaders = SpaceInvaders || {};
 (function($, SP) {
     var Game = function() {
         this.$container = $('#gamefield');
+        this.housesYPos = this.$container.height() - 100;
+        this.housesH = 20;
+        this.housesW = 20;
+        this.housesNo = 5;
         this.aliens = [];
         SP.makeObservable(this);
         this.layField();
         this.layCannon();
+        this.layHouses();
         this.attachFieldEvents();
         this.startClock();
     };
@@ -20,21 +25,47 @@ var SpaceInvaders = SpaceInvaders || {};
         this.inDom = false;
     };
 
+    var House = function() {
+        this.el = '<div class="house h1"></div>';
+        this.inDom = false;
+        this.currentClass = 'h1';
+    };
+
     var Bullet = function() {
         this.el = '<div class="bullet"></div>';
         SP.makeObservable(this);
         this.inDom = false;
         this.checkImpact = function() {
             var al = SP.game.aliens,
-                a = al.length - 1, i, alPos, bulPos, alW, bulW;
+                a = al.length - 1, i, alPos, bulPos, alW, bulW, noH, step, dist;
+            step = SP.game.$container.width() / SP.game.housesNo;
             while(a >= 0) {
                 i = al[a].length - 1;
                 while (i >= 0) {
 
-                    alPos = al[a][i].el.position();
-                    alW = al[a][i].el.width();
                     bulPos = this.el.position();
                     bulW = this.el.width();
+
+                    if (bulPos.top <= SP.game.housesYPos + SP.game.housesH &&
+                        bulPos.top >= SP.game.housesYPos) {
+                        // the bullet is in the houses row
+                        // we know from the start where the houses are
+                        noH = SP.game.housesNo - 1;
+
+                        while (noH >= 0) {
+                            dist = step / 2 + step * noH;
+                            if (bulPos.left >= dist && bulPos.left <= dist + SP.game.housesW) {
+                                return {
+                                    type : 'house',
+                                    num : noH
+                                }
+                            };
+                            noH--;
+                        }
+                    }
+
+                    alPos = al[a][i].el.position();
+                    alW = al[a][i].el.width();
 
                     if ((bulPos.left >= alPos.left) &&
                         (bulPos.left <= (alPos.left + alW)) &&
@@ -77,6 +108,23 @@ var SpaceInvaders = SpaceInvaders || {};
                 }, 100);
             }
         }
+    };
+
+    Game.prototype.layHouses = function() {
+        var numOfHouses  = this.housesNo,
+            yPos = this.housesYPos,
+            n = numOfHouses - 1,
+            interval = this.$container.width() / numOfHouses,
+            start = interval / 2;
+        this.houses = [];
+        while (n >= 0) {
+            this.houses[n] = new House();
+            this.appendObject(this.houses[n]);
+            this.houses[n].el.css('left', start + interval * n);
+            this.houses[n].el.css('top', yPos);
+            this.houses[n].el.attr('id', 'h' + n);
+            n--;
+        };
     };
 
     Game.prototype.layField = function() {
@@ -179,14 +227,37 @@ var SpaceInvaders = SpaceInvaders || {};
             bullet = null;
         }, this);
         bullet.subscribe('impacted', function(alObj) {
-            var alien = this.aliens[alObj.type][alObj.num];
-            alien.el.detach();
-            this.aliens[alObj.type].splice(alObj.num, 1);
-            alien = null;
+            if (alObj.type == 'house') {
+                this.degradeHouse(alObj);
+            } else {
+                this.blastAlien(alObj);
+            }
             bullet.unsubscribeAll();
             bullet = null;
         }, this);
         bullet.fire();
+    };
+
+    Game.prototype.blastAlien = function(alObj) {
+        var alien = this.aliens[alObj.type][alObj.num];
+        alien.el.detach();
+        this.aliens[alObj.type].splice(alObj.num, 1);
+        alien = null;
+    };
+
+    Game.prototype.degradeHouse = function(alObj) {
+        var house = this.houses[alObj.num], newClass;
+        if (house.currentClass == 'h6') {
+            house.el.remove();
+            this.houses.splice(alObj.num, 1);
+            house = null;
+        } else {
+            house.el.removeClass(house.currentClass);
+            newClass = 'h' + (1 + 1* house.currentClass.split('')[1]);
+            house.el.addClass(newClass);
+            house.currentClass = newClass;
+        }
+
     };
 
     Game.prototype.onKeyEvent = function(ev) {
