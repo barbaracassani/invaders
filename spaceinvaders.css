@@ -1,0 +1,42 @@
+#gamefield {
+    position: relative;
+    top:10px;
+    bottom:10px;
+    width: 800px;
+    height:500px;
+    border:2px solid #708090;
+}
+
+.cannon {
+    width:20px;
+    height: 20px;
+    background-color: #9acd32;
+    position: absolute;
+    bottom:10px;
+    left:10px;
+}
+
+.bullet {
+    width:2px;
+    height:5px;
+    background-color: #2f4f4f;
+    position: absolute;
+}
+
+.alien {
+    width:20px;
+    height:20px;
+    position: absolute;
+}
+.bug {
+    background-color: yellow;
+}
+.nasty {
+    background-color: #9370db;
+}
+.baddies {
+    background-color: #2f4f4f;
+}
+.minions {
+    background-color: #b22222;
+}
