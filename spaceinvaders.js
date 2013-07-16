@@ -16,11 +16,17 @@ var SpaceInvaders = SpaceInvaders || {};
     };
 
     var Alien = function(config) {
+        var _self = this;
         this.el = '<div class="alien ' + config.class + '"></div>';
         this.inDom = false;
-        this.timeout = window.setTimeout(function() {
-
-        }, 10000);
+        this.timerizeFire = function() {
+            this.timeout = window.setTimeout(function() {
+                window.clearTimeout(_self.timeout);
+                SP.game.fire.call(SP.game, _self);
+                _self.timerizeFire();
+            }, Math.random() * 70000 );
+        };
+        this.timerizeFire();
     };
 
     var Cannon = function() {
@@ -34,71 +40,82 @@ var SpaceInvaders = SpaceInvaders || {};
         this.currentClass = 'h1';
     };
 
-    var EnemyBullet = function() {
-        this.el = '<div class="bullet enemy"></div>';
-        SP.makeObservable(this);
-        this.inDom = false;
-        this.checkImpact = function() {
-
-        }
-    };
-
 
     var Bullet = function() {
         this.el = '<div class="bullet"></div>';
         SP.makeObservable(this);
         this.inDom = false;
-        this.checkImpact = function() {
+        this.checkImpact = function(isCannon) {
             var al = SP.game.aliens,
-                a = al.length - 1, i, alPos, bulPos, alW, bulW, noH, step, dist, onHouse;
+                a = al.length - 1, i, alPos, bulPos, alW, bulW, step, onHouse, cannonPos, cannonW;
             step = SP.game.$container.width() / SP.game.housesNo;
-            while(a >= 0) {
-                i = al[a].length - 1;
-                while (i >= 0) {
+            onHouse = SP.game.checkImpactOnHouses(this);
+            if (onHouse) {
+                return onHouse;
+            }
+            if (isCannon) {
 
-                    bulPos = this.el.position();
-                    bulW = this.el.width();
+                while(a >= 0) {
+                    i = al[a].length - 1;
+                    while (i >= 0) {
 
-                    onHouse = SP.game.checkImpactOnHouses(this);
-                    if (onHouse) {
-                        return onHouse;
-                    };
+                        bulPos = this.el.position();
+                        bulW = this.el.width();
 
-                    alPos = al[a][i].el.position();
-                    alW = al[a][i].el.width();
+                        alPos = al[a][i].el.position();
+                        alW = al[a][i].el.width();
 
-                    if ((bulPos.left >= alPos.left) &&
-                        (bulPos.left <= (alPos.left + alW)) &&
-                        (bulPos.top <= (alPos.top + al[a][i].el.height())) &&
-                        (bulPos.top >= alPos.top)) {
-                        console.warn('boom!')
-                        return {
-                            type : a,
-                            num : i
+                        if ((bulPos.left >= alPos.left) &&
+                            (bulPos.left <= (alPos.left + alW)) &&
+                            (bulPos.top <= (alPos.top + al[a][i].el.height())) &&
+                            (bulPos.top >= alPos.top)) {
+                            console.warn('boom!')
+                            return {
+                                type : a,
+                                num : i
+                            }
                         }
-                    }
 
-                    i--;
+                        i--;
+                    }
+                    a--;
                 }
-                a--;
+            } else {
+                bulPos = this.el.position();
+                bulW = this.el.width();
+                cannonPos = SP.game.cannon.el.position();
+                cannonW = SP.game.cannon.el.width();
+                if ((bulPos.left >= cannonPos.left) &&
+                    (bulPos.left <= (cannonPos.left + cannonW)) &&
+                    (bulPos.top <= (cannonPos.top + SP.game.cannon.el.height())) &&
+                    (bulPos.top >= cannonPos.top)) {
+                    return {
+                        type : 'cannon',
+                        num : null
+                    }
+                }
             }
             return false;
         };
-        this.checkBoundaries = function() {
-            return parseInt(this.el.css('top')) < 0;
+        this.checkBoundaries = function(isCannon) {
+            return isCannon ? parseInt(this.el.css('top')) < 0 :
+                parseInt(this.el.css('top')) > SP.game.$container.height();
         };
-        this.fire = function() {
+        this.fire = function(origin) {
             var _self = this, impacted;
             if (this.inDom) {
+
                 this.interval = window.setInterval(function() {
-                    _self.el.css('top', '-=7');
-                    if (_self.checkBoundaries.call(_self)) {
+                    origin == 'cannon' ? _self.el.css('top', '-=7') :
+                        _self.el.css('top', '+=7');
+
+                    if (_self.checkBoundaries.call(_self, origin === 'cannon')) {
                         _self.el.detach();
                         window.clearInterval(_self.interval);
                         _self.inDom = false;
                         _self.publish('outOfBoundaries');
                     }
-                    impacted = _self.checkImpact.call(_self);
+                    impacted = _self.checkImpact.call(_self, origin === 'cannon');
                     if (impacted) {
                         _self.el.detach();
                         window.clearInterval(_self.interval);
@@ -106,6 +123,7 @@ var SpaceInvaders = SpaceInvaders || {};
                         _self.publish('impacted', impacted);
                     }
                 }, 100);
+
             }
         }
     };
@@ -124,7 +142,7 @@ var SpaceInvaders = SpaceInvaders || {};
             this.houses[n].el.css('top', yPos);
             this.houses[n].el.attr('id', 'h' + n);
             n--;
-        };
+        }
     };
 
     Game.prototype.checkImpactOnCannon = function(bullet) {
@@ -214,8 +232,11 @@ var SpaceInvaders = SpaceInvaders || {};
 
     Game.prototype.attachFieldEvents = function() {
         var _self = this;
-        this.$container.keypress(function(ev) {
-            _self.onKeyEvent(ev)
+        $(document).keydown(function(ev) {
+            _self.onKeyDown(ev)
+        });
+        $(document).keyup(function(ev) {
+            _self.onKeyUp(ev)
         });
     };
 
@@ -256,11 +277,12 @@ var SpaceInvaders = SpaceInvaders || {};
         }
     };
 
-    Game.prototype.fire = function() {
-        var bullet = new Bullet();
+    Game.prototype.fire = function(origin) {
+        var bullet = new Bullet(),
+            shooter = origin === 'cannon' ? this.cannon : origin;
         this.appendObject(bullet);
-        bullet.el.css('left', parseInt(this.cannon.el.css('left') + this.cannon.el.width() / 2) );
-        bullet.el.css('top', parseInt(this.cannon.el.css('top')));
+        bullet.el.css('left', parseInt(shooter.el.css('left') + shooter.el.width() / 2) );
+        bullet.el.css('top', parseInt(shooter.el.css('top')));
         bullet.subscribe('outOfBoundaries', function() {
             bullet.unsubscribeAll();
             bullet = null;
@@ -268,13 +290,20 @@ var SpaceInvaders = SpaceInvaders || {};
         bullet.subscribe('impacted', function(alObj) {
             if (alObj.type == 'house') {
                 this.degradeHouse(alObj);
+            } else if (alObj.type == 'cannon') {
+                this.blastCannon();
             } else {
                 this.blastAlien(alObj);
             }
             bullet.unsubscribeAll();
             bullet = null;
         }, this);
-        bullet.fire();
+        bullet.fire(origin);
+    };
+
+    Game.prototype.blastCannon = function() {
+        this.cannon.el.remove();
+        console.warn('cannon hit!')
     };
 
     Game.prototype.blastAlien = function(alObj) {
@@ -287,6 +316,9 @@ var SpaceInvaders = SpaceInvaders || {};
 
     Game.prototype.degradeHouse = function(alObj) {
         var house = this.houses[alObj.num], newClass;
+        if (!house) {
+            return;
+        }
         if (house.currentClass == 'h6') {
             house.el.remove();
             this.houses.splice(alObj.num, 1);
@@ -300,21 +332,57 @@ var SpaceInvaders = SpaceInvaders || {};
 
     };
 
-    Game.prototype.onKeyEvent = function(ev) {
+    Game.prototype.moveCannon = function(left) {
+        var _self = this;
+        this.cannonMovingDirection = left ? 'left' : 'right';
+        this.cannonMoving = window.setInterval(function() {
+            if (left) {
+                if (parseInt(_self.cannon.el.css('left')) > 0) {
+                    _self.cannon.el.css('left', '-=7');
+                }
+            } else {
+                if ((parseInt(_self.cannon.el.css('left')) + _self.cannon.el.width()) < _self.$container.width()) {
+                    _self.cannon.el.css('left', '+=7');
+                }
+            }
+        }, 30);
+    };
+
+    Game.prototype.stopCannon = function() {
+        window.clearInterval(this.cannonMoving);
+        this.cannonMoving = null;
+    };
+
+    Game.prototype.onKeyUp = function(ev) {
         switch(ev.keyCode) {
-            case 0:
-                SP.throttle('fire', this.fire, this, 1000, null);
+            case 37:
+            case 39:
+                this.stopCannon();
+                break;
+        }
+    };
+
+    Game.prototype.onKeyDown = function(ev) {
+        switch(ev.keyCode) {
+            case 32:
+                SP.throttle('fire', this.fire, this, 1000, 'cannon');
                 break;
             case 37:
-                if (parseInt(this.cannon.el.css('left')) > 0) {
-                    this.cannon.el.css('left', '-=5');
+                if (this.cannonMovingDirection === 'right') {
+                    this.stopCannon();
+                }
+                if (!this.cannonMoving) {
+                    this.moveCannon(true);
                 }
                 break;
             case 39:
-                if ((parseInt(this.cannon.el.css('left')) + this.cannon.el.width()) < this.$container.width()) {
-                    this.cannon.el.css('left', '+=5');
+                if (this.cannonMovingDirection === 'left') {
+                    this.stopCannon();
                 }
-                break;0
+                if (!this.cannonMoving) {
+                    this.moveCannon(false);
+                }
+                break;
         }
     };
 
