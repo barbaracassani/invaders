@@ -32,11 +32,13 @@ var SpaceInvaders = SpaceInvaders || {};
     };
 
     SP.publish = function(event, args) {
-        var callbacks = this.listeners[event],
-            len = callbacks? callbacks.length : 0,
+        var callbacks,
+            len,
             l, scope;
+
         this.listeners = this.listeners || {};
         callbacks = this.listeners[event];
+        len = callbacks? callbacks.length : 0;
 
         if (!callbacks || !len) {
             return;
