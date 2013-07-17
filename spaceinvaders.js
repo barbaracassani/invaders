@@ -11,6 +11,7 @@ var SpaceInvaders = SpaceInvaders || {};
         SP.makeObservable(this);
         this.layField();
         this.layCannon();
+        this.layRemainingLives();
         this.layHouses();
         this.attachFieldEvents();
         this.startClock();
@@ -70,7 +71,7 @@ var SpaceInvaders = SpaceInvaders || {};
                             (bulPos.left <= (alPos.left + alW)) &&
                             (bulPos.top <= (alPos.top + al[a][i].el.height())) &&
                             (bulPos.top >= alPos.top)) {
-                            console.warn('boom!')
+
                             return {
                                 type : a,
                                 num : i
@@ -241,6 +242,19 @@ var SpaceInvaders = SpaceInvaders || {};
         });
     };
 
+    Game.prototype.layRemainingLives = function() {
+        var lives = this.lives - 1 - 1,
+            cannon;
+        while (lives >= 0) {
+            cannon = $('#lives').appendOne(this.cannon.el.clone());
+            cannon.css({
+                top : 10,
+                right : (10 + lives * 30)
+            });
+            lives--;
+        }
+    };
+
     Game.prototype.startClock = function() {
         var interval = 50,
             _self = this,
@@ -251,6 +265,7 @@ var SpaceInvaders = SpaceInvaders || {};
             clockInterval,
             onClock = function() {
                 window.clearTimeout(clockInterval);
+                clockInterval = null;
                 clockInterval = window.setTimeout(function() {
                     _self.moveAliens(left, moveDown);
                     currentStep--;
@@ -296,10 +311,11 @@ var SpaceInvaders = SpaceInvaders || {};
 
     Game.prototype.fire = function(origin) {
         var bullet = new Bullet(),
-            shooter = origin === 'cannon' ? this.cannon : origin;
+            shooter = origin === 'cannon' ? this.cannon : origin,
+            posit = shooter.el.position();
         this.appendObject(bullet);
-        bullet.el.css('left', parseInt(shooter.el.css('left') + shooter.el.width() / 2) );
-        bullet.el.css('top', parseInt(shooter.el.css('top')));
+        bullet.el.css('left', parseInt(posit.left + shooter.el.width() / 2) );
+        bullet.el.css('top', parseInt(posit.top));
         bullet.subscribe('outOfBoundaries', function() {
             bullet.unsubscribeAll();
             bullet = null;
@@ -328,10 +344,11 @@ var SpaceInvaders = SpaceInvaders || {};
 
     Game.prototype.onDiminishingLives = function() {
         if (this.lives) {
-            // remove one cannon from animation
-            // recreate the cannon
-            // restart game.
-            // this.publish('restartClock')
+
+            $('#lives .cannon').first().remove();
+            this.layCannon();
+            this.publish('restartClock');
+
         } else {
             console.warn('game over');
         }
