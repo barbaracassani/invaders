@@ -6,6 +6,7 @@ var SpaceInvaders = SpaceInvaders || {};
         this.housesH = 20;
         this.housesW = 20;
         this.housesNo = 5;
+        this.lives = 5;
         this.aliens = [];
         SP.makeObservable(this);
         this.layField();
@@ -247,17 +248,33 @@ var SpaceInvaders = SpaceInvaders || {};
             currentStep = stepsInEitherDirection,
             left = true,
             moveDown = false,
-            clockInterval = window.setInterval(function() {
-            _self.moveAliens(left, moveDown);
-            currentStep--;
-            if (!currentStep) {
-                left = !left;
-                moveDown = true;
-                currentStep = stepsInEitherDirection;
-            } else {
-                moveDown = false;
-            }
-        }, interval);
+            clockInterval,
+            onClock = function() {
+                window.clearTimeout(clockInterval);
+                clockInterval = window.setTimeout(function() {
+                    _self.moveAliens(left, moveDown);
+                    currentStep--;
+                    if (!currentStep) {
+                        left = !left;
+                        moveDown = true;
+                        currentStep = stepsInEitherDirection;
+                    } else {
+                        moveDown = false;
+                    }
+                    onClock();
+                }, interval);
+            };
+        this.subscribe('oneAlienLess', function() {
+            interval-=2;
+        });
+        this.subscribe('oneCannonLess', function() {
+            window.clearTimeout(clockInterval);
+        });
+        this.subscribe('restartClock', function() {
+            onClock();
+        });
+        onClock();
+
     };
 
     Game.prototype.moveAliens = function(left, moveDown) {
@@ -292,8 +309,10 @@ var SpaceInvaders = SpaceInvaders || {};
                 this.degradeHouse(alObj);
             } else if (alObj.type == 'cannon') {
                 this.blastCannon();
+                this.publish('oneCannonLess');
             } else {
                 this.blastAlien(alObj);
+                this.publish('oneAlienLess');
             }
             bullet.unsubscribeAll();
             bullet = null;
@@ -303,7 +322,19 @@ var SpaceInvaders = SpaceInvaders || {};
 
     Game.prototype.blastCannon = function() {
         this.cannon.el.remove();
-        console.warn('cannon hit!')
+        this.lives--;
+        this.onDiminishingLives();
+    };
+
+    Game.prototype.onDiminishingLives = function() {
+        if (this.lives) {
+            // remove one cannon from animation
+            // recreate the cannon
+            // restart game.
+            // this.publish('restartClock')
+        } else {
+            console.warn('game over');
+        }
     };
 
     Game.prototype.blastAlien = function(alObj) {
