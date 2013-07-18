@@ -74,3 +74,6 @@
 .minions {
     background-color: #b22222;
 }
+.fake {
+    visibility: hidden;
+}

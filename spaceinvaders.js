@@ -264,8 +264,6 @@ var SpaceInvaders = SpaceInvaders || {};
             moveDown = false,
             clockInterval,
             onClock = function() {
-                window.clearTimeout(clockInterval);
-                clockInterval = null;
                 clockInterval = window.setTimeout(function() {
                     _self.moveAliens(left, moveDown);
                     currentStep--;
