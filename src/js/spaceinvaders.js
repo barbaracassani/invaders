@@ -11,6 +11,29 @@ var SpaceInvaders = SpaceInvaders || {};
         this.housesNo = 5;
         this.lives = 5;
         this.aliens = [];
+
+        this.distanceBetweenAliens = 50;
+        this.offsetOfAlienField = 100;
+        this.aliensPerRow = 10;
+        this.alienTypes = [
+            {
+                class : 'minions',
+                exploding : null
+            },
+            {
+                class : 'bug',
+                exploding : null
+            },
+            {
+                class : 'baddies',
+                exploding : null
+            },
+            {
+                class : 'nasty',
+                exploding : null
+            }
+        ];
+
         SP.makeObservable(this);
         this.layField();
         this.layCannon();
@@ -189,26 +212,8 @@ var SpaceInvaders = SpaceInvaders || {};
     };
 
     Game.prototype.layField = function() {
-        var rowSize = 10,
-            offset = 100,
-            alienTypes = [
-                {
-                    class : 'minions',
-                    exploding : null
-                },
-                {
-                    class : 'bug',
-                    exploding : null
-                },
-                {
-                    class : 'baddies',
-                    exploding : null
-                },
-                {
-                    class : 'nasty',
-                    exploding : null
-                }
-            ],
+        var rowSize = this.aliensPerRow,
+            alienTypes = this.alienTypes,
             el,
             i = 0, iLen = rowSize,
             a = 0, aLen = alienTypes.length;
@@ -218,8 +223,8 @@ var SpaceInvaders = SpaceInvaders || {};
                 this.aliens[a][i] = new Alien(alienTypes[a]);
                 this.appendObject(this.aliens[a][i]);
                 el = this.aliens[a][i].el;
-                el.css('top', a * 50 + offset);
-                el.css('left', i * 50 + offset);
+                el.css('top', a * this.distanceBetweenAliens + this.offsetOfAlienField);
+                el.css('left', i * this.distanceBetweenAliens + this.offsetOfAlienField);
             }
         }
     };
