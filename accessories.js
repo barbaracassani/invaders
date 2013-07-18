@@ -5,7 +5,7 @@ var SpaceInvaders = SpaceInvaders || {};
      */
     SP.mixin = function() {
         if (arguments.length < 2) {
-            throw Error("This mixin expect at least 2 arguments, receiver and augmentator");
+            throw Error("This mixin expect at least 3 arguments, receiver and augmentator, and a method name");
         }
 
         var args = Array.prototype.slice.apply(arguments),
@@ -108,6 +108,10 @@ var SpaceInvaders = SpaceInvaders || {};
         }, time);
     };
 
+    /**
+     * Truly annoyed by jQuery returning the container and not the appendee, unlike vanilla js.
+     * That will teach it :PPP
+     */
     $.fn.extend({
         appendOne : function(child) {
             var el = $(child);
