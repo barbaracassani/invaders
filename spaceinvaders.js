@@ -1,5 +1,8 @@
 var SpaceInvaders = SpaceInvaders || {};
 (function($, SP) {
+
+    'use strict';
+
     var Game = function() {
         this.$container = $('#gamefield');
         this.housesYPos = this.$container.height() - 100;
@@ -75,7 +78,7 @@ var SpaceInvaders = SpaceInvaders || {};
                             return {
                                 type : a,
                                 num : i
-                            }
+                            };
                         }
 
                         i--;
@@ -94,22 +97,21 @@ var SpaceInvaders = SpaceInvaders || {};
                     return {
                         type : 'cannon',
                         num : null
-                    }
+                    };
                 }
             }
             return false;
         };
         this.checkBoundaries = function(isCannon) {
-            return isCannon ? parseInt(this.el.css('top')) < 0 :
-                parseInt(this.el.css('top')) > SP.game.$container.height();
+            return isCannon ? parseInt(this.el.css('top'), 10) < 0 :
+                parseInt(this.el.css('top'), 10) > SP.game.$container.height();
         };
         this.fire = function(origin) {
             var _self = this, impacted;
             if (this.inDom) {
 
                 this.interval = window.setInterval(function() {
-                    origin == 'cannon' ? _self.el.css('top', '-=7') :
-                        _self.el.css('top', '+=7');
+                    origin == 'cannon' ? (_self.el.css('top', '-=7')) : (_self.el.css('top', '+=7'));
 
                     if (_self.checkBoundaries.call(_self, origin === 'cannon')) {
                         _self.el.detach();
@@ -127,7 +129,7 @@ var SpaceInvaders = SpaceInvaders || {};
                 }, 100);
 
             }
-        }
+        };
     };
 
     Game.prototype.layHouses = function() {
@@ -178,8 +180,8 @@ var SpaceInvaders = SpaceInvaders || {};
                     return {
                         type : 'house',
                         num : noH
-                    }
-                };
+                    };
+                }
                 noH--;
             }
         }
@@ -235,10 +237,10 @@ var SpaceInvaders = SpaceInvaders || {};
     Game.prototype.attachFieldEvents = function() {
         var _self = this;
         $(document).keydown(function(ev) {
-            _self.onKeyDown(ev)
+            _self.onKeyDown(ev);
         });
         $(document).keyup(function(ev) {
-            _self.onKeyUp(ev)
+            _self.onKeyUp(ev);
         });
     };
 
@@ -312,8 +314,8 @@ var SpaceInvaders = SpaceInvaders || {};
             shooter = origin === 'cannon' ? this.cannon : origin,
             posit = shooter.el.position();
         this.appendObject(bullet);
-        bullet.el.css('left', parseInt(posit.left + shooter.el.width() / 2) );
-        bullet.el.css('top', parseInt(posit.top));
+        bullet.el.css('left', parseInt(posit.left + shooter.el.width() / 2, 10) );
+        bullet.el.css('top', parseInt(posit.top, 10));
         bullet.subscribe('outOfBoundaries', function() {
             bullet.unsubscribeAll();
             bullet = null;
@@ -383,11 +385,11 @@ var SpaceInvaders = SpaceInvaders || {};
         this.cannonMovingDirection = left ? 'left' : 'right';
         this.cannonMoving = window.setInterval(function() {
             if (left) {
-                if (parseInt(_self.cannon.el.css('left')) > 0) {
+                if (parseInt(_self.cannon.el.css('left'), 10) > 0) {
                     _self.cannon.el.css('left', '-=7');
                 }
             } else {
-                if ((parseInt(_self.cannon.el.css('left')) + _self.cannon.el.width()) < _self.$container.width()) {
+                if ((parseInt(_self.cannon.el.css('left'), 10) + _self.cannon.el.width()) < _self.$container.width()) {
                     _self.cannon.el.css('left', '+=7');
                 }
             }

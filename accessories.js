@@ -1,11 +1,14 @@
 var SpaceInvaders = SpaceInvaders || {};
 (function(SP, $) {
+
+    'use strict';
+
     /**
      * Expects receiver + methods as arguments
      */
     SP.mixin = function() {
         if (arguments.length < 2) {
-            throw Error("This mixin expect at least 3 arguments, receiver and augmentator, and a method name");
+            throw new Error("This mixin expect at least 3 arguments, receiver and augmentator, and a method name");
         }
 
         var args = Array.prototype.slice.apply(arguments),
@@ -100,7 +103,7 @@ var SpaceInvaders = SpaceInvaders || {};
     SP.throttle = function(id, func, scope, time, params) {
         if (SP.throttles[id]) {
             return;
-        };
+        }
         func.call(scope, params);
         SP.throttles[id] = window.setTimeout(function() {
             window.clearTimeout(SP.throttles[id]);
@@ -117,6 +120,6 @@ var SpaceInvaders = SpaceInvaders || {};
             var el = $(child);
             return $(this[0].appendChild(el[0]));
         }
-    })
+    });
 
 }(SpaceInvaders, jQuery));
