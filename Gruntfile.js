@@ -15,8 +15,19 @@ module.exports = function(grunt) {
                 dest: 'build/<%= pkg.name %>.min.js'
             }
         },
+        jasmine : {
+            src : 'src/js/*.js',
+            host : 'http://127.0.0.1:8000/',
+            options : {
+                keepRunner : true,
+                specs : 'specs/**/*.js',
+                vendor: [
+                    'src/lib/jQuery.js'
+                ]
+            }
+        },
         jshint: {
-            files: ['gruntfile.js', 'accessories.js', 'spaceinvaders.js'],
+            files: ['Gruntfile.js', 'src/js/accessories.js', 'src/js/spaceinvaders.js'],
             options: {
                 expr: true,
                 globals: {
@@ -31,6 +42,7 @@ module.exports = function(grunt) {
 
     grunt.loadNpmTasks('grunt-contrib-uglify');
     grunt.loadNpmTasks('grunt-contrib-jshint');
+    grunt.loadNpmTasks('grunt-contrib-jasmine');
 
     grunt.registerTask('test', ['jshint']);
 
