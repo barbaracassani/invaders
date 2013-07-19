@@ -10,11 +10,17 @@ var SpaceInvaders = SpaceInvaders || {};
         this.housesW = 20;
         this.housesNo = 5;
         this.lives = 5;
-        this.aliens = [];
 
-        this.distanceBetweenAliens = 50;
+        this.aliens = [];
+        this.xtremes = {};
+
+        this.distanceBetweenAliens = 30;
         this.offsetOfAlienField = 100;
         this.aliensPerRow = 10;
+
+        this.alienW = 20;
+        this.alienH = 20;
+
         this.alienTypes = [
             {
                 class : 'minions',
@@ -75,39 +81,73 @@ var SpaceInvaders = SpaceInvaders || {};
         this.inDom = false;
         this.checkImpact = function(isCannon) {
             var al = SP.game.aliens,
-                a = al.length - 1, i, alPos, bulPos, alW, bulW, step, onHouse, cannonPos, cannonW;
+                xtr = SP.game.xtremes,
+                a = al.length - 1, i, bulPos, bulW, step, onHouse, cannonPos, cannonW, alPos, alW,
+                xtrTop, xtrBottom, type, num;
+
             step = SP.game.$container.width() / SP.game.housesNo;
             onHouse = SP.game.checkImpactOnHouses(this);
+
             if (onHouse) {
                 return onHouse;
             }
             if (isCannon) {
 
-                while(a >= 0) {
-                    i = al[a].length - 1;
-                    while (i >= 0) {
+                bulPos = this.el.position();
+                bulW = this.el.width();
 
-                        bulPos = this.el.position();
-                        bulW = this.el.width();
+                xtrTop = xtr.topMostLeftMost.el.position();
+                xtrBottom = xtr.bottomMostRightMost.el.position();
 
-                        alPos = al[a][i].el.position();
-                        alW = al[a][i].el.width();
+                if(bulPos.left > xtrTop.left &&
+                    bulPos.left < xtrBottom.left + SP.game.alienW &&
+                    bulPos.top > xtrTop.top &&
+                    bulPos.top < xtrBottom.top + SP.game.alienH ) {
+                    // the bullet is at least in the "sensitive" area.
+                    // now let's fine grain it
 
-                        if ((bulPos.left >= alPos.left) &&
-                            (bulPos.left <= (alPos.left + alW)) &&
-                            (bulPos.top <= (alPos.top + al[a][i].el.height())) &&
-                            (bulPos.top >= alPos.top)) {
 
+                    // while smart, the matrix approach would need a collection. Or me to rewrite a few things.
+                    // which I may do, but not right now
+                    if ((((bulPos.left-xtrTop.left) % (SP.game.alienW + SP.game.distanceBetweenAliens)) <= SP.game.alienW) &&
+                        (((bulPos.top-xtrTop.top) % (SP.game.alienH + SP.game.distanceBetweenAliens))) <= SP.game.alienH) {
+                        type = Math.floor((bulPos.top-xtrTop.top) / (SP.game.alienH + SP.game.distanceBetweenAliens));
+                        num = Math.floor((bulPos.left-xtrTop.left) / (SP.game.alienW + SP.game.distanceBetweenAliens));
+                        // el.attr('id','al_' + a + '_' + i);
+                        if ($('#al_' + type + '_' + num).length) {
                             return {
-                                type : a,
-                                num : i
-                            };
+                                type : type,
+                                num : num
+                            }
                         }
-
-                        i--;
                     }
-                    a--;
+/*                    while(a >= 0) {
+                        i = al[a].length - 1;
+                        while (i >= 0) {
+
+                            bulPos = this.el.position();
+                            bulW = this.el.width();
+
+                            alPos = al[a][i].el.position();
+                            alW = this.alienW;
+
+                            if ((bulPos.left >= alPos.left) &&
+                                (bulPos.left <= (alPos.left + alW)) &&
+                                (bulPos.top <= (alPos.top + this.alienH)) &&
+                                (bulPos.top >= alPos.top)) {
+
+                                return {
+                                    type : a,
+                                    num : i
+                                };
+                            }
+
+                            i--;
+                        }
+                        a--;
+                    }*/
                 }
+
             } else {
                 bulPos = this.el.position();
                 bulW = this.el.width();
@@ -223,10 +263,17 @@ var SpaceInvaders = SpaceInvaders || {};
                 this.aliens[a][i] = new Alien(alienTypes[a]);
                 this.appendObject(this.aliens[a][i]);
                 el = this.aliens[a][i].el;
-                el.css('top', a * this.distanceBetweenAliens + this.offsetOfAlienField);
-                el.css('left', i * this.distanceBetweenAliens + this.offsetOfAlienField);
+                el.attr('id','al_' + a + '_' + i);
+                el.css('top', a * (this.distanceBetweenAliens + this.alienH) + this.offsetOfAlienField);
+                el.css('left', i * (this.distanceBetweenAliens + this.alienW) + this.offsetOfAlienField);
             }
         }
+        this.setXtremes();
+    };
+
+    Game.prototype.setXtremes = function() {
+        this.xtremes.topMostLeftMost = this.aliens[0][0];
+        this.xtremes.bottomMostRightMost = this.aliens[this.alienTypes.length-1][this.aliensPerRow-1];
     };
 
     Game.prototype.layCannon = function() {
@@ -234,8 +281,9 @@ var SpaceInvaders = SpaceInvaders || {};
         this.appendObject(this.cannon);
     };
 
-    Game.prototype.appendObject = function(obj) {
-        obj.el = this.$container.appendOne(obj.el);
+    Game.prototype.appendObject = function(obj, container) {
+        var $container = container || this.$container;
+        obj.el = $container.appendOne(obj.el);
         obj.inDom = true;
     };
 
@@ -301,6 +349,7 @@ var SpaceInvaders = SpaceInvaders || {};
         var value = left ? '+=1' : '-=1',
             al = this.aliens,
             a = al.length - 1, i;
+
         while(a >= 0) {
             i = al[a].length - 1;
             while (i >= 0) {
@@ -360,11 +409,28 @@ var SpaceInvaders = SpaceInvaders || {};
     };
 
     Game.prototype.blastAlien = function(alObj) {
-        var alien = this.aliens[alObj.type][alObj.num];
-        alien.el.detach();
-        window.clearTimeout(alien.timeout);
-        this.aliens[alObj.type].splice(alObj.num, 1);
-        alien = null;
+        var alienId = 'al_' + alObj.type + '_' + alObj.num,
+            a = this.aliens.length - 1, i;
+
+        $('#' + alienId).remove();
+
+
+        // probably better to keep the el references into a map but for the moment being that will do
+        while (a >= 0) {
+            i = this.aliens[a].length - 1;
+            while (i >= 0) {
+                if (this.aliens[a][i].el.attr('id') === alienId) {
+                    window.clearTimeout(this.aliens[a][i].timeout);
+                    this.aliens[a].splice[i, 1];
+                    return;
+                    /*if (!this.aliens[a].length) {
+                        this.aliens.splice(a, 1);
+                    }*/
+                }
+                i--;
+            }
+            a--;
+        }
     };
 
     Game.prototype.degradeHouse = function(alObj) {
