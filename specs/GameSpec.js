@@ -6,7 +6,7 @@ describe("Initialises the game correctly", function() {
         game;
 
     beforeEach(function() {
-        $('body').append('<div id="gamefield" tabindex="1"><div id="lives"></div></div>');
+        $('body').append('<div id="gamefield" tabindex="1"><div id="points"></div><div id="lives"></div></div>');
     });
 
     describe("the aliens", function() {

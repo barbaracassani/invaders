@@ -3,7 +3,9 @@ var SpaceInvaders = SpaceInvaders || {};
 
     'use strict';
 
+    var points = 0;
     var Game = function() {
+
         this.$container = $('#gamefield');
         this.housesYPos = this.$container.height() - 100;
         this.housesH = 20;
@@ -24,19 +26,23 @@ var SpaceInvaders = SpaceInvaders || {};
         this.alienTypes = [
             {
                 class : 'minions',
-                exploding : null
+                exploding : null,
+                points : 3
             },
             {
                 class : 'bug',
-                exploding : null
+                exploding : null,
+                points : 5
             },
             {
                 class : 'baddies',
-                exploding : null
+                exploding : null,
+                points : 7
             },
             {
                 class : 'nasty',
-                exploding : null
+                exploding : null,
+                points : 11
             }
         ];
 
@@ -44,6 +50,7 @@ var SpaceInvaders = SpaceInvaders || {};
         this.layField();
         this.layCannon();
         this.layRemainingLives();
+        this.updatePointsCounter(0);
         this.layHouses();
         this.attachFieldEvents();
         this.startClock();
@@ -54,6 +61,7 @@ var SpaceInvaders = SpaceInvaders || {};
             variance = 60000;
         this.el = '<div class="alien ' + config.class + '"></div>';
         this.inDom = false;
+        this.points = config.points;
         this.timerizeFire = function() {
             this.timeout = window.setTimeout(function() {
                 window.clearTimeout(_self.timeout);
@@ -122,35 +130,8 @@ var SpaceInvaders = SpaceInvaders || {};
                                 type : type,
                                 num : num
                             };
-                        } else {
-                            console.warn('no alien with ', type, num);
                         }
                     }
-/*                    while(a >= 0) {
-                        i = al[a].length - 1;
-                        while (i >= 0) {
-
-                            bulPos = this.el.position();
-                            bulW = this.el.width();
-
-                            alPos = al[a][i].el.position();
-                            alW = this.alienW;
-
-                            if ((bulPos.left >= alPos.left) &&
-                                (bulPos.left <= (alPos.left + alW)) &&
-                                (bulPos.top <= (alPos.top + this.alienH)) &&
-                                (bulPos.top >= alPos.top)) {
-
-                                return {
-                                    type : a,
-                                    num : i
-                                };
-                            }
-
-                            i--;
-                        }
-                        a--;
-                    }*/
                 }
 
             } else {
@@ -192,7 +173,7 @@ var SpaceInvaders = SpaceInvaders || {};
                     if (impacted) {
                         _self.el.remove();
                         window.cancelAnimationFrame(_self.interval);
-                        _self.inDom = false;;
+                        _self.inDom = false;
                         _self.publish('impacted', impacted);
                         return;
                     }
@@ -332,6 +313,11 @@ var SpaceInvaders = SpaceInvaders || {};
         }
     };
 
+    Game.prototype.updatePointsCounter = function(p) {
+        points+=p;
+        $('#points').text(points);
+    };
+
     Game.prototype.startClock = function() {
         var interval = 50,
             _self = this,
@@ -341,7 +327,7 @@ var SpaceInvaders = SpaceInvaders || {};
             moveDown = false,
             clockInterval,
             onClock;
-        this.subscribe('oneAlienLess', function() {
+        this.subscribe('oneAlienLess', function(alObj) {
             interval-=2;
         });
         this.subscribe('oneCannonLess', function() {
@@ -402,7 +388,7 @@ var SpaceInvaders = SpaceInvaders || {};
                 this.publish('oneCannonLess');
             } else {
                 this.blastAlien(alObj);
-                this.publish('oneAlienLess');
+                this.publish('oneAlienLess', alObj);
             }
             bullet.unsubscribeAll();
             bullet = null;
@@ -430,6 +416,7 @@ var SpaceInvaders = SpaceInvaders || {};
 
     Game.prototype.blastAlien = function(alObj) {
         var alienId = 'al_' + alObj.type + '_' + alObj.num,
+            removedAlien,
             a = this.aliens.length - 1, i;
 
         $('#' + alienId).remove();
@@ -441,7 +428,8 @@ var SpaceInvaders = SpaceInvaders || {};
             while (i >= 0) {
                 if (this.aliens[a][i].el.attr('id') === alienId) {
                     window.clearTimeout(this.aliens[a][i].timeout);
-                    this.aliens[a].splice(i, 1);
+                    removedAlien = this.aliens[a].splice(i, 1)[0];
+                    this.updatePointsCounter(removedAlien.points);
                     return;
                     /*if (!this.aliens[a].length) {
                         this.aliens.splice(a, 1);
