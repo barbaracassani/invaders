@@ -122,4 +122,35 @@ var SpaceInvaders = SpaceInvaders || {};
         }
     });
 
+    /**
+     * Stubbing the console when it's not around
+     * @type {Function}
+     */
+    window.console = window.console || {};
+    ['log', 'warn', 'error', 'assert', 'info', 'debug'].forEach(function(value, iterator) {
+        !window.console[value] && (window.console[value] = function(){});
+    });
+
+
+    /**
+     * Polyfill for requestAnimationFrame
+     */
+    window.requestAnimFrame = (function(){
+        return window.requestAnimationFrame ||
+            window.webkitRequestAnimationFrame ||
+            window.mozRequestAnimationFrame ||
+            function( callback ){
+                window.setTimeout(callback, 1000 / 60);
+            };
+    });
+
+    window.cancelAnimationFrame = (function() {
+        return window.cancelAnimationFrame ||
+            window.webkitCancelRequestAnimationFrame ||
+            window.mozCancelRequestAnimationFrame ||
+            function(id) {
+                window.clearTimeout(id);
+            };
+    });
+
 }(SpaceInvaders, jQuery));

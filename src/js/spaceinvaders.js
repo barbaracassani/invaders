@@ -118,7 +118,7 @@ var SpaceInvaders = SpaceInvaders || {};
                             return {
                                 type : type,
                                 num : num
-                            }
+                            };
                         }
                     }
 /*                    while(a >= 0) {
@@ -421,7 +421,7 @@ var SpaceInvaders = SpaceInvaders || {};
             while (i >= 0) {
                 if (this.aliens[a][i].el.attr('id') === alienId) {
                     window.clearTimeout(this.aliens[a][i].timeout);
-                    this.aliens[a].splice[i, 1];
+                    this.aliens[a].splice(i, 1);
                     return;
                     /*if (!this.aliens[a].length) {
                         this.aliens.splice(a, 1);
