@@ -98,8 +98,8 @@ var SpaceInvaders = SpaceInvaders || {};
                 bulPos = this.el.position();
                 bulW = this.el.width();
 
-                xtrTop = xtr.topMostLeftMost.el.position();
-                xtrBottom = xtr.bottomMostRightMost.el.position();
+                xtrTop = xtr.topMostLeftMost;
+                xtrBottom = xtr.bottomMostRightMost;
 
                 if(bulPos.left > xtrTop.left &&
                     bulPos.left < xtrBottom.left + SP.game.alienW &&
@@ -117,10 +117,13 @@ var SpaceInvaders = SpaceInvaders || {};
                         num = Math.floor((bulPos.left-xtrTop.left) / (SP.game.alienW + SP.game.distanceBetweenAliens));
                         // el.attr('id','al_' + a + '_' + i);
                         if ($('#al_' + type + '_' + num).length) {
+                            console.warn('hit', type, num);
                             return {
                                 type : type,
                                 num : num
                             };
+                        } else {
+                            console.warn('no alien with ', type, num);
                         }
                     }
 /*                    while(a >= 0) {
@@ -277,8 +280,22 @@ var SpaceInvaders = SpaceInvaders || {};
     };
 
     Game.prototype.setXtremes = function() {
-        this.xtremes.topMostLeftMost = this.aliens[0][0];
-        this.xtremes.bottomMostRightMost = this.aliens[this.alienTypes.length-1][this.aliensPerRow-1];
+        this.xtremes.topMostLeftMost = this.aliens[0][0].el.position();
+        this.xtremes.bottomMostRightMost = this.aliens[this.alienTypes.length-1][this.aliensPerRow-1].el.position();
+    };
+
+    Game.prototype.updateXtremes = function(isLeft, stepDown) {
+        if (isLeft) {
+            this.xtremes.topMostLeftMost.left++;
+            this.xtremes.bottomMostRightMost.left++;
+        } else {
+            this.xtremes.topMostLeftMost.left--;
+            this.xtremes.bottomMostRightMost.left--;
+        }
+        if (stepDown) {
+            this.xtremes.topMostLeftMost.top+=stepDown;
+            this.xtremes.bottomMostRightMost.top+=stepDown;
+        }
     };
 
     Game.prototype.layCannon = function() {
@@ -349,6 +366,7 @@ var SpaceInvaders = SpaceInvaders || {};
     Game.prototype.moveAliens = function(left, moveDown) {
         var value = left ? '+=1' : '-=1',
             al = this.aliens,
+            stepDown = 10,
             a = al.length - 1, i;
 
         while(a >= 0) {
@@ -356,12 +374,13 @@ var SpaceInvaders = SpaceInvaders || {};
             while (i >= 0) {
                 al[a][i].el.css('left', value);
                 if (moveDown) {
-                    al[a][i].el.css('top', '+=10');
+                    al[a][i].el.css('top', '+=' + stepDown);
                 }
                 i--;
             }
             a--;
         }
+        this.updateXtremes(left, (moveDown? stepDown : 0));
     };
 
     Game.prototype.fire = function(origin) {
