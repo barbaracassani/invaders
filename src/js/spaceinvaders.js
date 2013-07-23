@@ -15,7 +15,7 @@ var SpaceInvaders = SpaceInvaders || {};
         this.xtremes = {};
 
         this.distanceBetweenAliens = 30;
-        this.offsetOfAlienField = 100;
+        this.offsetOfAlienField = 50;
         this.aliensPerRow = 10;
 
         this.alienW = 20;
@@ -50,15 +50,17 @@ var SpaceInvaders = SpaceInvaders || {};
     };
 
     var Alien = function(config) {
-        var _self = this;
+        var _self = this,
+            variance = 60000;
         this.el = '<div class="alien ' + config.class + '"></div>';
         this.inDom = false;
         this.timerizeFire = function() {
             this.timeout = window.setTimeout(function() {
                 window.clearTimeout(_self.timeout);
                 SP.game.fire.call(SP.game, _self);
+                variance -= 500;
                 _self.timerizeFire();
-            }, Math.random() * 70000 );
+            }, parseInt(Math.random() * variance, 10) );
         };
         this.timerizeFire();
     };
@@ -173,24 +175,27 @@ var SpaceInvaders = SpaceInvaders || {};
             var _self = this, impacted;
             if (this.inDom) {
 
-                this.interval = window.setInterval(function() {
+                this.interval = function() {
                     origin == 'cannon' ? (_self.el.css('top', '-=7')) : (_self.el.css('top', '+=7'));
 
                     if (_self.checkBoundaries.call(_self, origin === 'cannon')) {
-                        _self.el.detach();
-                        window.clearInterval(_self.interval);
+                        _self.el.remove();
+                        window.cancelAnimationFrame(_self.interval);
                         _self.inDom = false;
                         _self.publish('outOfBoundaries');
+                        return;
                     }
                     impacted = _self.checkImpact.call(_self, origin === 'cannon');
                     if (impacted) {
-                        _self.el.detach();
-                        window.clearInterval(_self.interval);
-                        _self.inDom = false;
+                        _self.el.remove();
+                        window.cancelAnimationFrame(_self.interval);
+                        _self.inDom = false;;
                         _self.publish('impacted', impacted);
+                        return;
                     }
-                }, 100);
-
+                    window.requestAnimationFrame(_self.interval);
+                };
+                this.interval();
             }
         };
     };
@@ -313,34 +318,30 @@ var SpaceInvaders = SpaceInvaders || {};
     Game.prototype.startClock = function() {
         var interval = 50,
             _self = this,
-            stepsInEitherDirection = 100,
+            stepsInEitherDirection = 200,
             currentStep = stepsInEitherDirection,
             left = true,
             moveDown = false,
             clockInterval,
-            onClock = function() {
-                clockInterval = window.setTimeout(function() {
-                    _self.moveAliens(left, moveDown);
-                    currentStep--;
-                    if (!currentStep) {
-                        left = !left;
-                        moveDown = true;
-                        currentStep = stepsInEitherDirection;
-                    } else {
-                        moveDown = false;
-                    }
-                    onClock();
-                }, interval);
-            };
+            onClock;
         this.subscribe('oneAlienLess', function() {
             interval-=2;
         });
         this.subscribe('oneCannonLess', function() {
-            window.clearTimeout(clockInterval);
+            window.cancelAnimationFrame(onClock);
         });
-        this.subscribe('restartClock', function() {
-            onClock();
-        });
+        onClock = function() {
+            _self.moveAliens(left, moveDown);
+            currentStep--;
+            if (!currentStep) {
+                left = !left;
+                moveDown = true;
+                currentStep = stepsInEitherDirection;
+            } else {
+                moveDown = false;
+            }
+            clockInterval = window.requestAnimationFrame(onClock);
+        };
         onClock();
 
     };

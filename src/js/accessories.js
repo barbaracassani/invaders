@@ -132,17 +132,18 @@ var SpaceInvaders = SpaceInvaders || {};
     });
 
 
+
     /**
      * Polyfill for requestAnimationFrame
      */
-    window.requestAnimFrame = (function(){
+    window.requestAnimationFrame = (function(){
         return window.requestAnimationFrame ||
             window.webkitRequestAnimationFrame ||
             window.mozRequestAnimationFrame ||
             function( callback ){
                 window.setTimeout(callback, 1000 / 60);
             };
-    });
+    })();
 
     window.cancelAnimationFrame = (function() {
         return window.cancelAnimationFrame ||
@@ -151,6 +152,6 @@ var SpaceInvaders = SpaceInvaders || {};
             function(id) {
                 window.clearTimeout(id);
             };
-    });
+    })();
 
 }(SpaceInvaders, jQuery));
