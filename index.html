@@ -1,19 +1,28 @@
 <!doctype html>
 <html>
     <head>
-        <script src="src/lib/jQuery.js"></script>
         <link rel="stylesheet" href="src/css/spaceinvaders.css">
+        <script>
+            require = {
+                paths : {
+                    'jquery' : 'src/lib/jQuery',
+                    'houseTemplate' : 'src/js/houseTemplate',
+                    'invaders' : 'src/js/spaceinvaders'
+                }
+            }
+        </script>
     </head>
     <body>
         <div id="gamefield" tabindex="1">
 
         </div>
-        <script src="src/js/accessories.js"></script>
-        <script src="src/js/spaceinvaders.js"></script>
-    <!--<script src="build/invaders.min.js"></script>-->
+        <script type="text/javascript" src="src/lib/require.js"></script>
     <script type="text/javascript">
-        var SpaceInvaders = SpaceInvaders || {};
-        SpaceInvaders.game = new SpaceInvaders.Game();
+        require(['invaders'], function(Game) {
+            var game = new Game()
+        });
+     //   var SpaceInvaders = SpaceInvaders || {};
+     //   SpaceInvaders.game = new SpaceInvaders.Game();
     </script>
     </body>
 </html>

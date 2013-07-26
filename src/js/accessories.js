@@ -1,7 +1,8 @@
-var SpaceInvaders = SpaceInvaders || {};
-(function(SP, $) {
+define(['jquery'], function ($) {
 
     'use strict';
+
+    var SP =  {};
 
     /**
      * Expects receiver + methods as arguments
@@ -154,4 +155,6 @@ var SpaceInvaders = SpaceInvaders || {};
             };
     })();
 
-}(SpaceInvaders, jQuery));
+    return SP;
+
+});
