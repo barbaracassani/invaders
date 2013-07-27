@@ -4,11 +4,25 @@
   <meta charset="utf-8">
   <title>Jasmine Spec Runner</title>
 
+  
   <link rel="stylesheet" type="text/css" href=".grunt/grunt-contrib-jasmine/jasmine.css">
+  
 
+  <script src=".grunt/grunt-contrib-jasmine/require.js"></script>
+  <script>
+    require.onError = function(error) {
+      var message = error.requireType + ': ';
+      if (error.requireType === 'scripterror' || error.requireType === 'notloaded' && error.requireModules) {
+        message += 'Illegal path or script error: ' + '[\'' + error.requireModules.join("', '") + '\']';
+      } else {
+        message += error.message;
+      }
+
+      throw Error(message);
+    };
+  </script>
 
   
-  <script src=".grunt/grunt-contrib-jasmine/phantom-polyfill.js"></script>
   
   <script src=".grunt/grunt-contrib-jasmine/jasmine.js"></script>
   
@@ -16,19 +30,39 @@
   
   <script src="src/lib/jQuery.js"></script>
   
-  <script src="src/js/accessories.js"></script>
+  <script src="helpers/stubs.js"></script>
   
-  <script src="src/js/spaceinvaders.js"></script>
-  
-  <script src="specs/AccessoriesSpec.js"></script>
-  
-  <script src="specs/GameSpec.js"></script>
-  
-  <script src=".grunt/grunt-contrib-jasmine/reporter.js"></script>
-  
-  <script src=".grunt/grunt-contrib-jasmine/jasmine-helper.js"></script>
   
 
+  <script>
+    
+
+    
+      require.config({});
+    
+  </script>
+
+  <script>
+    function launchTest() {
+    require([
+      
+    ],
+    function(){
+      require(['specs/AccessoriesSpec.js','specs/GameSpec.js','.grunt/grunt-contrib-jasmine/reporter.js'], function(){
+        require(['.grunt/grunt-contrib-jasmine/jasmine-helper.js'], function(){
+          // good to go! Our tests should already be running.
+        })
+      })
+    }
+    )
+  }
+  </script>
+
+  
+  <script>
+  launchTest();
+  </script>
+  
 </head>
 <body>
 </body>

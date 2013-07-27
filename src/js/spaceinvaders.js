@@ -286,6 +286,10 @@ define(["jquery",
         $('#points').text(points);
     };
 
+    Game.prototype.subscribeHitEvents = function() {
+
+    };
+
     Game.prototype.startClock = function() {
         var interval = 50,
             _self = this,
@@ -322,7 +326,7 @@ define(["jquery",
 
     Game.prototype.onScreenCompleted = function() {
         this.$container.empty();
-        this.$container.text('Well done!')
+        this.$container.text('Well done!');
     };
 
     Game.prototype.wasThatLastAlien = function() {

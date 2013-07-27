@@ -2,15 +2,7 @@
 <html>
     <head>
         <link rel="stylesheet" href="src/css/spaceinvaders.css">
-        <script>
-            require = {
-                paths : {
-                    'jquery' : 'src/lib/jQuery',
-                    'houseTemplate' : 'src/js/houseTemplate',
-                    'invaders' : 'src/js/spaceinvaders'
-                }
-            }
-        </script>
+        <script src="requireconfig.js"></script>
     </head>
     <body>
         <div id="gamefield" tabindex="1">
@@ -21,8 +13,6 @@
         require(['invaders'], function(Game) {
             var game = new Game()
         });
-     //   var SpaceInvaders = SpaceInvaders || {};
-     //   SpaceInvaders.game = new SpaceInvaders.Game();
     </script>
     </body>
 </html>

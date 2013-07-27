@@ -21,6 +21,11 @@ module.exports = function(grunt) {
             options : {
                 keepRunner : true,
                 specs : 'specs/**/*.js',
+                helpers : 'helpers/*.js',
+                template: require('grunt-template-jasmine-requirejs'),
+                templateOptions: {
+                    requireConfigFile: 'requireconfig.js'
+                },
                 vendor: [
                     'src/lib/jQuery.js'
                 ]
