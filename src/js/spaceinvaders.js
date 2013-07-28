@@ -65,20 +65,20 @@ define(["jquery",
 
         this.setup();
 
-        this.layRemainingLives();
+
         this.updatePointsCounter(0);
         this.attachFieldEvents();
     };
 
     Game.prototype.setup = function() {
+        this.unsubscribeGameEvents();
         this.layField();
         this.layCannon();
+        this.layRemainingLives();
         this.layHouses();
 
         this.startClock();
     };
-
-    //Game.prototype.tearDown()
 
     Game.prototype.layHouses = function() {
         var numOfHouses  = this.housesNo,
@@ -112,7 +112,6 @@ define(["jquery",
     };
 
     Game.prototype.checkImpactOnAliens = function(bullet) {
-    //    if (isCannon) {
 
             var bulPos = bullet.el.position();
             var bulW = bullet.el.width();
@@ -156,6 +155,7 @@ define(["jquery",
     };
 
     Game.prototype.blastAllTheAliens = function() {
+        this.publish('stopMovingAliens');
         this.aliens.forEach(function(ar, v) {
             ar.forEach(function(alien, val) {
                 this.neutraliseAlien(alien);
@@ -173,6 +173,7 @@ define(["jquery",
     };
 
     Game.prototype.gameOver = function() {
+        this.unsubscribeGameEvents();
         this.blastAllTheAliens();
         this.blastAllTheHouses();
         this.$container.empty();
@@ -248,7 +249,7 @@ define(["jquery",
                     }
                     if((ar[0].el.position().top+this.alienH) >= this.housesYPos) {
                         this.houses.forEach(function(val, key) {
-                            this.degradeHouse({num : val});
+                            this.degradeHouse({num : key});
                         }, this);
                     }
                 }, this);
@@ -257,10 +258,6 @@ define(["jquery",
     };
 
     Game.prototype.popHouse = function(index) {
-        if (!this.houses.length) {
-            this.gameOver();
-            return;
-        }
         var house = this.houses[index];
         (house && house.el) && house.el.remove();
         this.houses[index] = null;
@@ -307,6 +304,12 @@ define(["jquery",
         $('#points').text('Level '+ level + ' - points ' + points);
     };
 
+    Game.prototype.unsubscribeGameEvents = function() {
+        this.unsubscribe('oneAlienLess');
+        this.unsubscribe('stopMovingAliens');
+        this.unsubscribe('restartClock');
+    };
+
     Game.prototype.startClock = function() {
         var interval = 50,
             _self = this,
@@ -322,7 +325,7 @@ define(["jquery",
             }
             interval-=2;
         });
-        this.subscribe('oneCannonLess', function() {
+        this.subscribe('stopMovingAliens', function() {
             window.cancelAnimationFrame(clockInterval);
             _self.aliens.forEach(function(ar) {
                 ar.forEach(function(val, key) {
@@ -434,7 +437,7 @@ define(["jquery",
                     if (alObj) {
                         this.blastBullet(bullet);
                         this.blastCannon();
-                        this.publish('oneCannonLess');
+                        this.publish('stopMovingAliens');
                     }
                 }
             } else {
@@ -443,19 +446,6 @@ define(["jquery",
 
         }, this);
         bullet.subscribe('outOfBoundaries', function() {
-            bullet.unsubscribeAll();
-            bullet = null;
-        }, this);
-        bullet.subscribe('impacted', function(alObj) {
-            if (alObj.type == 'house') {
-                this.degradeHouse(alObj);
-            } else if (alObj.type == 'cannon') {
-                this.blastCannon();
-                this.publish('oneCannonLess');
-            } else {
-                this.blastAlien(alObj);
-                this.publish('oneAlienLess', alObj);
-            }
             bullet.unsubscribeAll();
             bullet = null;
         }, this);
@@ -492,16 +482,18 @@ define(["jquery",
     };
 
     Game.prototype.neutraliseAlien = function(alien) {
-        (alien && alien.timeout) && window.clearTimeout(alien.timeout);
+        if (!alien) {
+            return;
+        }
+        alien.timeout && alien.stopFire();
+        alien.unsubscribeAll();
+        alien.el && alien.el.remove();
     };
 
     Game.prototype.blastAlien = function(alObj) {
         var alienId = 'al_' + alObj.type + '_' + alObj.num,
             removedAlien,
             a = this.aliens.length - 1, i;
-
-        $('#' + alienId).remove();
-
 
         // probably better to keep the el references into a map but for the moment being that will do
         while (a >= 0) {
@@ -530,6 +522,7 @@ define(["jquery",
             this.popHouse(alObj.num);
             if (!this.housesCounter) {
                 this.gameOver();
+                return;
             }
         } else {
             house.el.removeClass(house.currentClass);

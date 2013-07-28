@@ -90,11 +90,17 @@ define(['jquery'], function ($) {
 
         listeners[event] = listeners[event] || [];
         len = listeners[event].length;
+        if (!token) {
+            listeners[event] = [];
+        }
         while (len >= 0) {
-            if (listeners[event][len].token === token) {
-                listeners[event].splice(len,1);
-                return;
+            if (token) {
+                if (listeners[event][len].token === token) {
+                    listeners[event].splice(len,1);
+                    return;
+                }
             }
+            len--;
         }
 
     };
