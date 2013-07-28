@@ -365,7 +365,7 @@ define(["jquery",
             this.animateMessage('Level ' + (level + 1), function() {
                 this.advanceLevel();
             });
-        })
+        });
     };
 
     Game.prototype.advanceLevel = function() {
