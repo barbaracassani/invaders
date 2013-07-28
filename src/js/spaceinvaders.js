@@ -8,7 +8,9 @@ define(["jquery",
     'use strict';
 
     var points = 0,
+        level = 1,
         variance = 60000;
+
     var Game = function() {
 
         this.$container = $('#gamefield');
@@ -60,14 +62,23 @@ define(["jquery",
         ];
 
         SP.makeObservable(this);
-        this.layField();
-        this.layCannon();
+
+        this.setup();
+
         this.layRemainingLives();
         this.updatePointsCounter(0);
-        this.layHouses();
         this.attachFieldEvents();
+    };
+
+    Game.prototype.setup = function() {
+        this.layField();
+        this.layCannon();
+        this.layHouses();
+
         this.startClock();
     };
+
+    //Game.prototype.tearDown()
 
     Game.prototype.layHouses = function() {
         var numOfHouses  = this.housesNo,
@@ -150,12 +161,20 @@ define(["jquery",
                 this.neutraliseAlien(alien);
             }, this);
         }, this);
+        this.aliens = [];
+    };
+
+    Game.prototype.blastAllTheHouses = function() {
+        this.houses.forEach(function(h, key) {
+            this.popHouse(key);
+        }, this);
+        this.houses = [];
     };
 
     Game.prototype.gameOver = function() {
-        this.$container.empty();
         this.blastAllTheAliens();
-        this.aliens = [];
+        this.blastAllTheHouses();
+        this.$container.empty();
         this.$container.html('game over!');
     };
 
@@ -221,16 +240,18 @@ define(["jquery",
         if (stepDown) {
             this.xtremes.topMostLeftMost.top+=stepDown;
             this.xtremes.bottomMostRightMost.top+=stepDown;
-        }
-        if (this.xtremes.bottomMostRightMost.top >= this.housesYPos) {
-            this.aliens.forEach(function(ar, index) {
-                if(!ar.length) {
-                    return;
-                }
-                if((ar[0].el.position().top+this.alienH) >= this.housesYPos) {
-                    this.popHouse(0);
-                }
-            }, this);
+            if (this.xtremes.bottomMostRightMost.top >= this.housesYPos - 10) {
+                this.aliens.forEach(function(ar, index) {
+                    if(!ar.length) {
+                        return;
+                    }
+                    if((ar[0].el.position().top+this.alienH) >= this.housesYPos) {
+                        this.houses.forEach(function(val, key) {
+                            this.degradeHouse({num : val});
+                        }, this);
+                    }
+                }, this);
+            }
         }
     };
 
@@ -239,9 +260,8 @@ define(["jquery",
             this.gameOver();
             return;
         }
-        //var house = this.houses.splice(index, 1)[0];
         var house = this.houses[index];
-        house.el.remove();
+        (house && house.el) && house.el.remove();
         this.houses[index] = null;
         house = null;
         this.housesCounter--;
@@ -282,12 +302,8 @@ define(["jquery",
     };
 
     Game.prototype.updatePointsCounter = function(p) {
-        points+=p;
-        $('#points').text(points);
-    };
-
-    Game.prototype.subscribeHitEvents = function() {
-
+        p && (points+=p);
+        $('#points').text('Level '+ level + ' - points ' + points);
     };
 
     Game.prototype.startClock = function() {
@@ -306,7 +322,20 @@ define(["jquery",
             interval-=2;
         });
         this.subscribe('oneCannonLess', function() {
-            window.cancelAnimationFrame(onClock);
+            window.cancelAnimationFrame(clockInterval);
+            _self.aliens.forEach(function(ar) {
+                ar.forEach(function(val, key) {
+                    val.stopFire();
+                });
+            });
+        });
+        this.subscribe('restartClock', function() {
+            onClock();
+            _self.aliens.forEach(function(ar) {
+                ar.forEach(function(val, key) {
+                    val.restartFire();
+                });
+            });
         });
         onClock = function() {
             _self.moveAliens(left, moveDown);
@@ -325,8 +354,21 @@ define(["jquery",
     };
 
     Game.prototype.onScreenCompleted = function() {
+        this.blastAllTheAliens();
+        this.blastAllTheHouses();
         this.$container.empty();
-        this.$container.text('Well done!');
+        this.animateMessage('Well done!', function() {
+            this.animateMessage('Level ' + (level + 1), function() {
+                this.advanceLevel();
+            });
+        })
+    };
+
+    Game.prototype.advanceLevel = function() {
+        level++;
+        this.updatePointsCounter(100);
+        variance-=2000;
+        this.setup();
     };
 
     Game.prototype.wasThatLastAlien = function() {
@@ -426,14 +468,25 @@ define(["jquery",
 
     Game.prototype.onDiminishingLives = function() {
         if (this.lives) {
-
-            $('#lives .cannon').first().remove();
-            this.layCannon();
-            this.publish('restartClock');
-
+            this.animateMessage('Ouch!', function() {
+                $('#lives .cannon').first().remove();
+                this.layCannon();
+                this.publish('restartClock');
+            });
         } else {
             this.gameOver();
+            this.animateMessage('Game over');
         }
+    };
+
+    Game.prototype.animateMessage = function(message, callback) {
+        this.$container.append('<div id="message">' + message + '</div>');
+        $('#message').addClass('animation');
+        var _self = this;
+        var wait = window.setTimeout(function() {
+            $('#message').remove();
+            callback && callback.call(_self);
+        }, 3000);
     };
 
     Game.prototype.neutraliseAlien = function(alien) {
@@ -518,7 +571,7 @@ define(["jquery",
     Game.prototype.onKeyDown = function(ev) {
         switch(ev.keyCode) {
             case 32:
-                SP.throttle('fire', this.fire, this, 1000, 'cannon');
+                SP.throttle('fire', this.fire, this, 800, 'cannon');
                 break;
             case 37:
                 if (this.cannonMovingDirection === 'right') {

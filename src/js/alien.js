@@ -17,5 +17,11 @@ define(['jquery', "src/js/accessories"], function ($, SP) {
         };
         this.timerizeFire();
     };
+    Alien.prototype.stopFire = function() {
+        window.clearTimeout(this.timeout);
+    };
+    Alien.prototype.restartFire = function() {
+        this.timerizeFire();
+    };
     return Alien;
 });

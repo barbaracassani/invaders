@@ -28,8 +28,23 @@
 .bullet {
     width:2px;
     height:5px;
-    background-color: #2f4f4f;
+    background-color: white;
     position: absolute;
+}
+#message {
+    height: 2px;
+    font-size: 11px;
+    margin: auto auto;
+    text-align: center;
+    color: black;
+    font-family: sans-serif;
+}
+#message.animation {
+    color: white;
+    -webkit-transition: all 4s ease-in-out;
+    -moz-transition: all 4s ease-in-out;
+    -ms-transition: all 4s ease-in-out;
+    transition: all 4s ease-in-out;
 }
 .bullet.enemy {
     background-color: red;
