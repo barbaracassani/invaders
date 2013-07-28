@@ -159,6 +159,7 @@ define(["jquery",
         this.aliens.forEach(function(ar, v) {
             ar.forEach(function(alien, val) {
                 this.neutraliseAlien(alien);
+                alien = null;
             }, this);
         }, this);
         this.aliens = [];
@@ -365,6 +366,7 @@ define(["jquery",
     };
 
     Game.prototype.advanceLevel = function() {
+        this.$container.html(this.template);
         level++;
         this.updatePointsCounter(100);
         variance-=2000;
@@ -490,7 +492,7 @@ define(["jquery",
     };
 
     Game.prototype.neutraliseAlien = function(alien) {
-        window.clearTimeout(alien.timeout);
+        (alien && alien.timeout) && window.clearTimeout(alien.timeout);
     };
 
     Game.prototype.blastAlien = function(alObj) {
